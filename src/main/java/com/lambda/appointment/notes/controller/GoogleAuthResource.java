@@ -1,6 +1,7 @@
 package com.lambda.appointment.notes.controller;
 
 
+import com.lambda.appointment.notes.dto.CodeExtractedFromGoogleUrlResponse;
 import com.lambda.appointment.notes.service.GoogleAuthService;
 import com.lambda.appointment.notes.service.LoginService;
 
@@ -24,22 +25,21 @@ public class GoogleAuthResource {
     @GET
     @Path("/google")
     public Response redirectToGoogleAuth() {
-        // Gerar o URL de autenticação do Google e redirecionar o usuário para ele
         String redirectUrl = googleAuthService.getGoogleAuthUrl();
         return Response.seeOther(URI.create(redirectUrl)).build();
     }
 
     @GET
     @Path("/google/code")
-    public Response getGoogleUserCode(@QueryParam("urlWithCode") String urlWithCode) throws UnsupportedEncodingException {
-        String code = googleAuthService.extractCodeFromRedirectUrl(urlWithCode);
-        return Response.ok(code).build();
+    public Response getGoogleUserCode(@QueryParam("urlWithCode") String urlWithCode) {
+        CodeExtractedFromGoogleUrlResponse googleAuthUrlCodeResponse = googleAuthService.extractCodeFromRedirectUrl(urlWithCode);
+        return Response.ok(googleAuthUrlCodeResponse).build();
     }
 
     @POST
     @Path("/google/callback")
-    public Response googleCallback(@QueryParam("code") String code) {
-        return Response.ok(loginService.loginGoogleAccess(code)).build();
+    public Response googleCallback(@QueryParam("code") String loginAuthenticateCode) {
+        return Response.ok(loginService.loginGoogleAccess(loginAuthenticateCode)).build();
     }
 
 }
