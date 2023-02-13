@@ -1,6 +1,8 @@
 package com.lambda.appointment.notes.service;
 
-import com.lambda.appointment.notes.dto.UserDTO;
+import com.lambda.appointment.notes.dto.*;
+import com.lambda.appointment.notes.indicators.GoogleAuthServiceErrorMessage;
+import com.lambda.appointment.notes.util.GoogleAuthServiceStringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.json.Json;
@@ -19,13 +21,12 @@ import java.net.URLDecoder;
 @ApplicationScoped
 public class GoogleAuthService {
 
-    private final String clientId = "119876353782-5lu09i7mfu1omm23r6s9so1i9m5hiejg.apps.googleusercontent.com"; // Adicionar o client ID fornecido pelo GoogleØ
-    private final String clientSecret = "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"; // Adicionar o client secret fornecido pelo Google
-    private final String redirectUri = "https://65d4-2804-d55-47f0-c00-3822-22-1977-1bc8.sa.ngrok.io"; // Adicionar a URL de redirecionamento
+    private final String clientId = "119876353782-5lu09i7mfu1omm23r6s9so1i9m5hiejg.apps.googleusercontent.com"; // client ID of Google
+    private final String clientSecret = "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"; // client secret of Google
+    private final String redirectUri = "https://9a13-191-221-193-141.sa.ngrok.io/"; // Application public URL
 
 
     public String getGoogleAuthUrl() {
-        // Gerar o URL de autenticação do Google
         String url = "https://accounts.google.com/o/oauth2/v2/auth" +
                 "?response_type=code" +
                 "&client_id=" + clientId +
@@ -35,78 +36,113 @@ public class GoogleAuthService {
         return url;
     }
 
-    public String exchangeCodeForToken(String code) {
-        String body = "code=" + code + "&client_id=" + clientId + "&client_secret=" + clientSecret + "&redirect_uri=" + redirectUri + "&grant_type=authorization_code";
+    public ExchangeGoogleCodeForTokenResponse exchangeCodeForToken(String loginAuthenticateCode) {
+        try{
+            String body = GoogleAuthServiceStringUtils.createTokenUrlRequest(loginAuthenticateCode, clientId, clientSecret, redirectUri);
+            String headerName = "Content-Type";
+            String headerValue = "application/x-www-form-urlencoded";
+            String requestUrl = "https://oauth2.googleapis.com/token";
+            String jsonParameter = "access_token";
 
-        Client client = ClientBuilder.newClient();
-        WebTarget target = client.target("https://oauth2.googleapis.com/token");
-        Response response = target.request().header("Content-Type", "application/x-www-form-urlencoded")
-                .post(Entity.entity(body, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+            Client client = ClientBuilder.newClient();
+            WebTarget target = client.target(requestUrl);
+            Response response = target.request().header(headerName, headerValue)
+                    .post(Entity.entity(body, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-        String responseBody = response.readEntity(String.class);
-        JsonObject responseJson = Json.createReader(new StringReader(responseBody)).readObject();
+            String responseBody = response.readEntity(String.class);
+            JsonObject responseJson = Json.createReader(new StringReader(responseBody)).readObject();
 
-        String accessToken = responseJson.getString("access_token");
-        return accessToken;
+            String accessToken = responseJson.getString(jsonParameter);
+
+            return new ExchangeGoogleCodeForTokenResponse(accessToken);
+        } catch (RuntimeException ex) {
+            return new ExchangeGoogleCodeForTokenResponse(null,
+                    GoogleAuthServiceErrorMessage.EXTERNAL.exchangeCodeForTokenError(ex, loginAuthenticateCode));
+        }
     }
 
-    public UserDTO getGoogleUserId(String accessToken) {
-        Client client = ClientBuilder.newClient();
-        WebTarget target = client.target("https://www.googleapis.com/oauth2/v1/userinfo?access_token=" + accessToken);
-        Response response = target.request().get();
+    public GoogleUserIdResponse getGoogleUserId(String accessToken) {
+        try{
+            String urlGoogleUserInfo = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=" + accessToken;
 
-        String responseBody = response.readEntity(String.class);
-        JsonObject responseJson = Json.createReader(new StringReader(responseBody)).readObject();
+            Client client = ClientBuilder.newClient();
+            WebTarget target = client.target(urlGoogleUserInfo);
+            Response response = target.request().get();
 
-        UserDTO userDTO = new UserDTO();
-        userDTO.setGoogleUserId(responseJson.getString("id"));
-        userDTO.setName(responseJson.getString("name"));
-        userDTO.setEmail(responseJson.getString("email"));
-        return userDTO;
+            String responseBody = response.readEntity(String.class);
+            JsonObject responseJson = Json.createReader(new StringReader(responseBody)).readObject();
+
+            UserDTO userDTO = new UserDTO();
+            userDTO.setGoogleUserId(responseJson.getString("id"));
+            userDTO.setName(responseJson.getString("name"));
+            userDTO.setEmail(responseJson.getString("email"));
+            return new GoogleUserIdResponse(userDTO);
+        } catch (RuntimeException ex) {
+            return new GoogleUserIdResponse(GoogleAuthServiceErrorMessage.EXTERNAL.getGoogleUserIdError(ex,accessToken));
+        }
     }
 
-    public boolean isTokenValid(String accessToken) {
+    public IsGoogleTokenValidResponse isTokenValid(String accessToken) {
+        IsGoogleTokenValidResponse isGoogleTokenValidResponse = new IsGoogleTokenValidResponse();
         try {
-            URL url = new URL("https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken);
+            String urlGoogleTokenInfo = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken;
+
+            URL url = new URL(urlGoogleTokenInfo);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             int responseCode = conn.getResponseCode();
             if (responseCode == 200) {
-                return true;
+                isGoogleTokenValidResponse.setIsTokenValid(Boolean.TRUE);
             }
+            conn.disconnect();
         } catch (Exception e) {
-            // Handle exceptions
+           isGoogleTokenValidResponse.setIsTokenValid(Boolean.FALSE);
+           isGoogleTokenValidResponse.setExternalError(GoogleAuthServiceErrorMessage.EXTERNAL.isTokenValidError(e, accessToken));
         }
-        return false;
+        return isGoogleTokenValidResponse;
     }
 
-    public String renewToken(String accessToken) {
-        if (isTokenValid(accessToken)) {
-            return accessToken;
-        }
-
-        String redirectUrl = getGoogleAuthUrl();
-        String code = extractCodeFromRedirectUrl(redirectUrl);
-
-        accessToken = exchangeCodeForToken(code);
-        return accessToken;
-    }
-
-    public String extractCodeFromRedirectUrl(String urlWithCode) {
+    public RenewGoogleTokenResponse renewToken(String accessToken) {
         try {
-            String decodedUrl = URLDecoder.decode(urlWithCode, "UTF-8");
-            int codeIndex = decodedUrl.indexOf("code=");
-            if (codeIndex == -1) {
-                return "";
+            if (isTokenValid(accessToken).getIsTokenValid()) {
+                return new RenewGoogleTokenResponse(Boolean.TRUE, accessToken);
             }
-            int ampersandIndex = decodedUrl.indexOf("&", codeIndex);
-            if (ampersandIndex == -1) {
-                return decodedUrl.substring(codeIndex + "code=".length());
-            }
-            return decodedUrl.substring(codeIndex + "code=".length(), ampersandIndex);
-        } catch (Exception e) {
-            return "";
+            String redirectUrl = getGoogleAuthUrl();
+            CodeExtractedFromGoogleUrlResponse codeExtractedFromGoogleUrlResponse = extractCodeFromRedirectUrl(redirectUrl);
+            String codeExtracted = codeExtractedFromGoogleUrlResponse.getCodeExtractedFromUrl();
+
+            accessToken = exchangeCodeForToken(codeExtracted).getAccessToken();
+            return new RenewGoogleTokenResponse(Boolean.TRUE, accessToken);
+        } catch (RuntimeException ex) {
+            return new RenewGoogleTokenResponse(Boolean.FALSE,
+                    GoogleAuthServiceErrorMessage.EXTERNAL.renewTokenError(ex, accessToken), null);
         }
+    }
+
+    public CodeExtractedFromGoogleUrlResponse extractCodeFromRedirectUrl(String urlWithCode) {
+        CodeExtractedFromGoogleUrlResponse codeExtractedFromGoogleUrlResponse = new CodeExtractedFromGoogleUrlResponse();
+        String extractedCode = null;
+        String codeUrlTag = "code=";
+        String encodeType = "UTF-8";
+        String finalReferenceParam = "&";
+
+        try {
+            String decodedUrl = URLDecoder.decode(urlWithCode, encodeType);
+            int codeIndex = decodedUrl.indexOf(codeUrlTag);
+            if (codeIndex == -1) {
+                extractedCode = "";
+            }
+            int ampersandIndex = decodedUrl.indexOf(finalReferenceParam, codeIndex);
+            if (ampersandIndex == -1) {
+                extractedCode = decodedUrl.substring(codeIndex + codeUrlTag.length());
+            }
+            extractedCode = decodedUrl.substring(codeIndex + codeUrlTag.length(), ampersandIndex);
+        } catch (Exception e) {
+            codeExtractedFromGoogleUrlResponse.setExternalError(
+                    GoogleAuthServiceErrorMessage.EXTERNAL.extractCodeFromRedirectUrlError(e, urlWithCode));
+        }
+        codeExtractedFromGoogleUrlResponse.setCodeExtractedFromUrl(extractedCode);
+        return codeExtractedFromGoogleUrlResponse;
     }
 
 }
