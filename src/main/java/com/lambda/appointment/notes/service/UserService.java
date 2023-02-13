@@ -3,14 +3,18 @@ package com.lambda.appointment.notes.service;
 import com.lambda.appointment.notes.dto.UserDTO;
 import com.lambda.appointment.notes.mapper.UserMapper;
 import com.lambda.appointment.notes.model.User;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Objects;
 
 @ApplicationScoped
 public class UserService {
+
+    @Inject
+    EntityManager em;
 
     @Transactional
     public void addUser(UserDTO userDTO) {
@@ -18,8 +22,9 @@ public class UserService {
         User.persist(user);
     }
 
+    @Transactional
     public void updateUser(User user) {
-        User.persist(user);
+        em.merge(user);
     }
 
     public void removeUser(Long id) {
@@ -30,7 +35,7 @@ public class UserService {
         return User.listAll();
     }
 
-    public UserDTO getLoggedInUser(String googleUserId) {
+    public UserDTO findByGoogleUserId(String googleUserId) {
         User userDataBase = User.find("googleUserId", googleUserId).firstResult();
         return UserMapper.toDTO(userDataBase);
     }
@@ -43,7 +48,7 @@ public class UserService {
 
     public UserDTO getUserByGoogleId(String googleUserId) {
         User userDataBase = User.find("googleUserId", googleUserId).firstResult();
-        return UserMapper.toDTO(userDataBase);
+        return Objects.isNull(userDataBase) ? null : UserMapper.toDTO(userDataBase);
     }
 }
 

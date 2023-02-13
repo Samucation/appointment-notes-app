@@ -42,4 +42,8 @@ public class User extends PanacheEntity {
     @Column(name = "googleToken")
     private String googleToken;
 
+    public static User findByGoogleUserId(String googleUserId) {
+        return find("googleUserId", googleUserId).firstResult();
+    }
+
 }

@@ -12,6 +12,9 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLDecoder;
 
 @ApplicationScoped
 public class GoogleAuthService {
@@ -19,6 +22,7 @@ public class GoogleAuthService {
     private final String clientId = "119876353782-5lu09i7mfu1omm23r6s9so1i9m5hiejg.apps.googleusercontent.com"; // Adicionar o client ID fornecido pelo GoogleØ
     private final String clientSecret = "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"; // Adicionar o client secret fornecido pelo Google
     private final String redirectUri = "https://65d4-2804-d55-47f0-c00-3822-22-1977-1bc8.sa.ngrok.io"; // Adicionar a URL de redirecionamento
+
 
     public String getGoogleAuthUrl() {
         // Gerar o URL de autenticação do Google
@@ -32,7 +36,6 @@ public class GoogleAuthService {
     }
 
     public String exchangeCodeForToken(String code) {
-        // Endpoint de token de acesso do Google
         String body = "code=" + code + "&client_id=" + clientId + "&client_secret=" + clientSecret + "&redirect_uri=" + redirectUri + "&grant_type=authorization_code";
 
         Client client = ClientBuilder.newClient();
@@ -40,14 +43,9 @@ public class GoogleAuthService {
         Response response = target.request().header("Content-Type", "application/x-www-form-urlencoded")
                 .post(Entity.entity(body, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-
-        // Analisar a resposta e extrair o token de acesso
         String responseBody = response.readEntity(String.class);
-
-        // Converter a resposta para um objeto JSON
         JsonObject responseJson = Json.createReader(new StringReader(responseBody)).readObject();
 
-        // Recuperar o token de acesso
         String accessToken = responseJson.getString("access_token");
         return accessToken;
     }
@@ -65,6 +63,50 @@ public class GoogleAuthService {
         userDTO.setName(responseJson.getString("name"));
         userDTO.setEmail(responseJson.getString("email"));
         return userDTO;
+    }
+
+    public boolean isTokenValid(String accessToken) {
+        try {
+            URL url = new URL("https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            int responseCode = conn.getResponseCode();
+            if (responseCode == 200) {
+                return true;
+            }
+        } catch (Exception e) {
+            // Handle exceptions
+        }
+        return false;
+    }
+
+    public String renewToken(String accessToken) {
+        if (isTokenValid(accessToken)) {
+            return accessToken;
+        }
+
+        String redirectUrl = getGoogleAuthUrl();
+        String code = extractCodeFromRedirectUrl(redirectUrl);
+
+        accessToken = exchangeCodeForToken(code);
+        return accessToken;
+    }
+
+    public String extractCodeFromRedirectUrl(String urlWithCode) {
+        try {
+            String decodedUrl = URLDecoder.decode(urlWithCode, "UTF-8");
+            int codeIndex = decodedUrl.indexOf("code=");
+            if (codeIndex == -1) {
+                return "";
+            }
+            int ampersandIndex = decodedUrl.indexOf("&", codeIndex);
+            if (ampersandIndex == -1) {
+                return decodedUrl.substring(codeIndex + "code=".length());
+            }
+            return decodedUrl.substring(codeIndex + "code=".length(), ampersandIndex);
+        } catch (Exception e) {
+            return "";
+        }
     }
 
 }
