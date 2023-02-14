@@ -1,6 +1,6 @@
 package com.lambda.appointment.notes;
 
-import com.lambda.appointment.notes.dto.CodeExtractedFromGoogleUrlResponse;
+import com.lambda.appointment.notes.dto.response.CodeExtractedFromGoogleUrlResponse;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;

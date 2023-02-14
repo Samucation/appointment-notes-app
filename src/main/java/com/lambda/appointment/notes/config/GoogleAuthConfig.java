@@ -9,19 +9,39 @@ import javax.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class GoogleAuthConfig {
 
-    @ConfigProperty(name = "google.auth.redirectUri")
+    @ConfigProperty(name = "google.auth2.redirectUri")
     String redirectUri;
 
-    @ConfigProperty(name = "google.auth.clientSecret")
+    @ConfigProperty(name = "google.auth2.clientSecret")
     String clientSecret;
 
-    @ConfigProperty(name = "google.auth.googleAuthApplicationUrl")
+    @ConfigProperty(name = "google.auth2.googleAuthApplicationUrl")
     String googleAuthApplicationUrl;
 
-    @ConfigProperty(name = "google.auth.clientId")
+    @ConfigProperty(name = "google.auth2.clientId")
     String clientId;
 
-    @ConfigProperty(name = "google.auth.googleTokenUrlRequest")
+    @ConfigProperty(name = "google.auth2.googleTokenUrlRequest")
     String googleTokenUrlRequest;
+
+    @ConfigProperty(name = "google.auth2.tokenInfoUrl")
+    String tokenInfoUrl;
+
+    @ConfigProperty(name = "google.auth2.userInfoUrl")
+    String userInfoUrl;
+
+    @ConfigProperty(name = "google.auth2.exchangeCodeForToken.headerName")
+    String headerName;
+
+    @ConfigProperty(name = "google.auth2.exchangeCodeForToken.headerValue")
+    String headerValue;
+
+    @ConfigProperty(name = "google.auth2.exchangeCodeForToken.requestUrl")
+    String requestUrl;
+
+    @ConfigProperty(name = "google.auth2.exchangeCodeForToken.jsonParameter")
+    String jsonParameter;
+
+
 }
 

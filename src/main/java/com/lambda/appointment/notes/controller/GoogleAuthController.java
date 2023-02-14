@@ -1,7 +1,7 @@
 package com.lambda.appointment.notes.controller;
 
 
-import com.lambda.appointment.notes.dto.CodeExtractedFromGoogleUrlResponse;
+import com.lambda.appointment.notes.dto.response.CodeExtractedFromGoogleUrlResponse;
 import com.lambda.appointment.notes.service.GoogleAuthService;
 import com.lambda.appointment.notes.service.LoginService;
 

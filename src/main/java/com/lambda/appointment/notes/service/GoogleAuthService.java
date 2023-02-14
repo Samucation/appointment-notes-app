@@ -2,6 +2,10 @@ package com.lambda.appointment.notes.service;
 
 import com.lambda.appointment.notes.config.GoogleAuthConfig;
 import com.lambda.appointment.notes.dto.*;
+import com.lambda.appointment.notes.dto.response.CodeExtractedFromGoogleUrlResponse;
+import com.lambda.appointment.notes.dto.response.ExchangeGoogleCodeForTokenResponse;
+import com.lambda.appointment.notes.dto.response.GoogleUserIdResponse;
+import com.lambda.appointment.notes.dto.response.IsGoogleTokenValidResponse;
 import com.lambda.appointment.notes.indicators.GoogleAuthServiceErrorMessage;
 import com.lambda.appointment.notes.util.GoogleAuthServiceStringUtils;
 
@@ -44,15 +48,14 @@ public class GoogleAuthService {
             String redirectUri = googleAuthConfig.getRedirectUri();
 
             String body = googleAuthServiceStringUtils.createTokenUrlRequest(loginAuthenticateCode, clientId, clientSecret, redirectUri);
-            String headerName = "Content-Type";
-            String headerValue = "application/x-www-form-urlencoded";
-            String requestUrl = "https://oauth2.googleapis.com/token";
-            String jsonParameter = "access_token";
+            String headerName = googleAuthConfig.getHeaderName();
+            String headerValue = googleAuthConfig.getHeaderValue();
+            String requestUrl = googleAuthConfig.getRequestUrl();
+            String jsonParameter = googleAuthConfig.getJsonParameter();
 
             Client client = ClientBuilder.newClient();
             WebTarget target = client.target(requestUrl);
-            Response response = target.request().header(headerName, headerValue)
-                    .post(Entity.entity(body, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+            Response response = target.request().header(headerName, headerValue).post(Entity.entity(body, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
             String responseBody = response.readEntity(String.class);
             JsonObject responseJson = Json.createReader(new StringReader(responseBody)).readObject();
@@ -68,7 +71,7 @@ public class GoogleAuthService {
 
     public GoogleUserIdResponse getGoogleUserParams(String accessToken) {
         try{
-            String urlGoogleUserInfo = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=" + accessToken;
+            String urlGoogleUserInfo = googleAuthConfig.getUserInfoUrl() + accessToken;
 
             Client client = ClientBuilder.newClient();
             WebTarget target = client.target(urlGoogleUserInfo);
@@ -90,7 +93,7 @@ public class GoogleAuthService {
     public IsGoogleTokenValidResponse isTokenValid(String accessToken) {
         IsGoogleTokenValidResponse isGoogleTokenValidResponse = new IsGoogleTokenValidResponse();
         try {
-            String urlGoogleTokenInfo = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken;
+            String urlGoogleTokenInfo = googleAuthConfig.getTokenInfoUrl() + accessToken;
 
             URL url = new URL(urlGoogleTokenInfo);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -110,21 +113,8 @@ public class GoogleAuthService {
     public CodeExtractedFromGoogleUrlResponse extractCodeFromRedirectUrl(String urlWithCode) {
         CodeExtractedFromGoogleUrlResponse codeExtractedFromGoogleUrlResponse = new CodeExtractedFromGoogleUrlResponse();
         String extractedCode = null;
-        String codeUrlTag = "code=";
-        String encodeType = "UTF-8";
-        String finalReferenceParam = "&";
-
         try {
-            String decodedUrl = URLDecoder.decode(urlWithCode, encodeType);
-            int codeIndex = decodedUrl.indexOf(codeUrlTag);
-            if (codeIndex == -1) {
-                extractedCode = "";
-            }
-            int ampersandIndex = decodedUrl.indexOf(finalReferenceParam, codeIndex);
-            if (ampersandIndex == -1) {
-                extractedCode = decodedUrl.substring(codeIndex + codeUrlTag.length());
-            }
-            extractedCode = decodedUrl.substring(codeIndex + codeUrlTag.length(), ampersandIndex);
+           extractedCode = googleAuthServiceStringUtils.extractCodeIntoUrlGoogleAuth2Response(urlWithCode);
         } catch (Exception e) {
             codeExtractedFromGoogleUrlResponse.setExternalError(
                     GoogleAuthServiceErrorMessage.EXTERNAL.extractCodeFromRedirectUrlError(e, urlWithCode));
