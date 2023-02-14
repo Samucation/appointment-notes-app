@@ -1,7 +1,7 @@
 
 google:
   auth2:
-    redirectUri: https://46de-191-221-193-141.sa.ngrok.io
+    redirectUri: https://eab5-189-112-50-138.sa.ngrok.io
     clientSecret: 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
     clientId: 119876353782-5lu09i7mfu1omm23r6s9so1i9m5hiejg.apps.googleusercontent.com
     googleAuthApplicationUrl: https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={clientId}&redirect_uri={redirectUri}&scope=openid%20email%20profile&prompt=select_account
