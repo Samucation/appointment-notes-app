@@ -1,10 +1,12 @@
 package com.lambda.appointment.notes.service;
 
+import com.lambda.appointment.notes.config.GoogleAuthConfig;
 import com.lambda.appointment.notes.dto.*;
 import com.lambda.appointment.notes.indicators.GoogleAuthServiceErrorMessage;
 import com.lambda.appointment.notes.util.GoogleAuthServiceStringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
@@ -21,24 +23,27 @@ import java.net.URLDecoder;
 @ApplicationScoped
 public class GoogleAuthService {
 
-    private final String clientId = "119876353782-5lu09i7mfu1omm23r6s9so1i9m5hiejg.apps.googleusercontent.com"; // client ID of Google
-    private final String clientSecret = "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"; // client secret of Google
-    private final String redirectUri = "https://9a13-191-221-193-141.sa.ngrok.io/"; // Application public URL
+    @Inject
+    GoogleAuthConfig googleAuthConfig;
+
+    @Inject
+    GoogleAuthServiceStringUtils googleAuthServiceStringUtils;
 
 
     public String getGoogleAuthUrl() {
-        String url = "https://accounts.google.com/o/oauth2/v2/auth" +
-                "?response_type=code" +
-                "&client_id=" + clientId +
-                "&redirect_uri=" + redirectUri +
-                "&scope=openid%20email%20profile" +
-                "&prompt=select_account";
+        String clientId = googleAuthConfig.getClientId();
+        String redirectUri = googleAuthConfig.getRedirectUri();
+        String url = googleAuthServiceStringUtils.createGoogleApplicationUrl(clientId, redirectUri);
         return url;
     }
 
     public ExchangeGoogleCodeForTokenResponse exchangeCodeForToken(String loginAuthenticateCode) {
         try{
-            String body = GoogleAuthServiceStringUtils.createTokenUrlRequest(loginAuthenticateCode, clientId, clientSecret, redirectUri);
+            String clientId = googleAuthConfig.getClientId();
+            String clientSecret = googleAuthConfig.getClientSecret();
+            String redirectUri = googleAuthConfig.getRedirectUri();
+
+            String body = googleAuthServiceStringUtils.createTokenUrlRequest(loginAuthenticateCode, clientId, clientSecret, redirectUri);
             String headerName = "Content-Type";
             String headerValue = "application/x-www-form-urlencoded";
             String requestUrl = "https://oauth2.googleapis.com/token";
@@ -61,7 +66,7 @@ public class GoogleAuthService {
         }
     }
 
-    public GoogleUserIdResponse getGoogleUserId(String accessToken) {
+    public GoogleUserIdResponse getGoogleUserParams(String accessToken) {
         try{
             String urlGoogleUserInfo = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=" + accessToken;
 
@@ -100,23 +105,6 @@ public class GoogleAuthService {
            isGoogleTokenValidResponse.setExternalError(GoogleAuthServiceErrorMessage.EXTERNAL.isTokenValidError(e, accessToken));
         }
         return isGoogleTokenValidResponse;
-    }
-
-    public RenewGoogleTokenResponse renewToken(String accessToken) {
-        try {
-            if (isTokenValid(accessToken).getIsTokenValid()) {
-                return new RenewGoogleTokenResponse(Boolean.TRUE, accessToken);
-            }
-            String redirectUrl = getGoogleAuthUrl();
-            CodeExtractedFromGoogleUrlResponse codeExtractedFromGoogleUrlResponse = extractCodeFromRedirectUrl(redirectUrl);
-            String codeExtracted = codeExtractedFromGoogleUrlResponse.getCodeExtractedFromUrl();
-
-            accessToken = exchangeCodeForToken(codeExtracted).getAccessToken();
-            return new RenewGoogleTokenResponse(Boolean.TRUE, accessToken);
-        } catch (RuntimeException ex) {
-            return new RenewGoogleTokenResponse(Boolean.FALSE,
-                    GoogleAuthServiceErrorMessage.EXTERNAL.renewTokenError(ex, accessToken), null);
-        }
     }
 
     public CodeExtractedFromGoogleUrlResponse extractCodeFromRedirectUrl(String urlWithCode) {

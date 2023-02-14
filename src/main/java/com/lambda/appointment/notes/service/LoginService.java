@@ -33,8 +33,8 @@ public class LoginService {
     }
 
     @Transactional
-    private UserDTO createOrUpdateUserAndSetToken(String accessToken){
-        UserDTO externalGoogleUserDTO = authService.getGoogleUserId(accessToken).getUserDTO();
+    public UserDTO createOrUpdateUserAndSetToken(String accessToken){
+        UserDTO externalGoogleUserDTO = authService.getGoogleUserParams(accessToken).getUserDTO();
         UserDTO userDataBaseDTO = userService.getUserByGoogleId(externalGoogleUserDTO.getGoogleUserId());
 
         if (Objects.isNull(userDataBaseDTO)) {

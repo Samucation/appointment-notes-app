@@ -9,12 +9,11 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
-public class GoogleAuthResource {
+public class GoogleAuthController {
 
     @Inject
     GoogleAuthService googleAuthService;
@@ -41,5 +40,18 @@ public class GoogleAuthResource {
     public Response googleCallback(@QueryParam("code") String loginAuthenticateCode) {
         return Response.ok(loginService.loginGoogleAccess(loginAuthenticateCode)).build();
     }
+
+    @POST
+    @Path("/google/user")
+    public Response getGoogleUserParams(@QueryParam("accessToken") String accessToken) {
+        return Response.ok(googleAuthService.getGoogleUserParams(accessToken)).build();
+    }
+
+    @POST
+    @Path("/google/valid-token")
+    public Response isTokenValid(@QueryParam("accessToken") String accessToken) {
+        return Response.ok(googleAuthService.isTokenValid(accessToken)).build();
+    }
+
 
 }
