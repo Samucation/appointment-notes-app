@@ -1,12 +1,7 @@
 package com.lambda.appointment.notes.service;
 
 import com.lambda.appointment.notes.config.GoogleAuthConfig;
-import com.lambda.appointment.notes.dto.*;
-import com.lambda.appointment.notes.dto.response.CodeExtractedFromGoogleUrlResponse;
-import com.lambda.appointment.notes.dto.response.ExchangeGoogleCodeForTokenResponse;
-import com.lambda.appointment.notes.dto.response.GoogleUserIdResponse;
-import com.lambda.appointment.notes.dto.response.IsGoogleTokenValidResponse;
-import com.lambda.appointment.notes.indicators.GoogleAuthServiceErrorMessage;
+import com.lambda.appointment.notes.dto.UserDTO;
 import com.lambda.appointment.notes.util.GoogleAuthServiceStringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -22,7 +17,6 @@ import javax.ws.rs.core.Response;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLDecoder;
 
 @ApplicationScoped
 public class GoogleAuthService {
@@ -34,14 +28,18 @@ public class GoogleAuthService {
     GoogleAuthServiceStringUtils googleAuthServiceStringUtils;
 
 
-    public String getGoogleAuthUrl() {
-        String clientId = googleAuthConfig.getClientId();
-        String redirectUri = googleAuthConfig.getRedirectUri();
-        String url = googleAuthServiceStringUtils.createGoogleApplicationUrl(clientId, redirectUri);
-        return url;
+    public String getGoogleAuthUrl() throws Exception {
+        try {
+            String clientId = googleAuthConfig.getClientId();
+            String redirectUri = googleAuthConfig.getRedirectUri();
+            String url = googleAuthServiceStringUtils.createGoogleApplicationUrl(clientId, redirectUri);
+            return url;
+        } catch (Exception e) {
+            throw new Exception("Error while get google auth url: that error is: ", e);
+        }
     }
 
-    public ExchangeGoogleCodeForTokenResponse exchangeCodeForToken(String loginAuthenticateCode) {
+    public String exchangeCodeForToken(String loginAuthenticateCode) throws Exception {
         try{
             String clientId = googleAuthConfig.getClientId();
             String clientSecret = googleAuthConfig.getClientSecret();
@@ -62,14 +60,13 @@ public class GoogleAuthService {
 
             String accessToken = responseJson.getString(jsonParameter);
 
-            return new ExchangeGoogleCodeForTokenResponse(accessToken);
+            return accessToken;
         } catch (RuntimeException ex) {
-            return new ExchangeGoogleCodeForTokenResponse(null,
-                    GoogleAuthServiceErrorMessage.EXTERNAL.exchangeCodeForTokenError(ex, loginAuthenticateCode));
+            throw new Exception("Error while exchange code for token: that error is: ", ex);
         }
     }
 
-    public GoogleUserIdResponse getGoogleUserParams(String accessToken) {
+    public UserDTO getGoogleUserParams(String accessToken) {
         try{
             String urlGoogleUserInfo = googleAuthConfig.getUserInfoUrl() + accessToken;
 
@@ -84,14 +81,13 @@ public class GoogleAuthService {
             userDTO.setGoogleUserId(responseJson.getString("id"));
             userDTO.setName(responseJson.getString("name"));
             userDTO.setEmail(responseJson.getString("email"));
-            return new GoogleUserIdResponse(userDTO);
+            return userDTO;
         } catch (RuntimeException ex) {
-            return new GoogleUserIdResponse(GoogleAuthServiceErrorMessage.EXTERNAL.getGoogleUserIdError(ex,accessToken));
+            throw new RuntimeException("Error while get google params in auth2 google cloud, that error is: ", ex);
         }
     }
 
-    public IsGoogleTokenValidResponse isTokenValid(String accessToken) {
-        IsGoogleTokenValidResponse isGoogleTokenValidResponse = new IsGoogleTokenValidResponse();
+    public Boolean isTokenValid(String accessToken) throws Exception {
         try {
             String urlGoogleTokenInfo = googleAuthConfig.getTokenInfoUrl() + accessToken;
 
@@ -99,28 +95,24 @@ public class GoogleAuthService {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             int responseCode = conn.getResponseCode();
-            if (responseCode == 200) {
-                isGoogleTokenValidResponse.setIsTokenValid(Boolean.TRUE);
-            }
             conn.disconnect();
+
+            if (responseCode == 200) {
+                return Boolean.TRUE;
+            } else {
+                return Boolean.FALSE;
+            }
         } catch (Exception e) {
-           isGoogleTokenValidResponse.setIsTokenValid(Boolean.FALSE);
-           isGoogleTokenValidResponse.setExternalError(GoogleAuthServiceErrorMessage.EXTERNAL.isTokenValidError(e, accessToken));
+            throw new Exception("Error while validate if token is valid, that error is: ", e);
         }
-        return isGoogleTokenValidResponse;
     }
 
-    public CodeExtractedFromGoogleUrlResponse extractCodeFromRedirectUrl(String urlWithCode) {
-        CodeExtractedFromGoogleUrlResponse codeExtractedFromGoogleUrlResponse = new CodeExtractedFromGoogleUrlResponse();
-        String extractedCode = null;
+    public String extractCodeFromRedirectUrl(String urlWithCode) throws Exception {
         try {
-           extractedCode = googleAuthServiceStringUtils.extractCodeIntoUrlGoogleAuth2Response(urlWithCode);
+           return googleAuthServiceStringUtils.extractCodeIntoUrlGoogleAuth2Response(urlWithCode);
         } catch (Exception e) {
-            codeExtractedFromGoogleUrlResponse.setExternalError(
-                    GoogleAuthServiceErrorMessage.EXTERNAL.extractCodeFromRedirectUrlError(e, urlWithCode));
+            throw new Exception("Error while extract code from redirect url, that error is: ", e);
         }
-        codeExtractedFromGoogleUrlResponse.setCodeExtractedFromUrl(extractedCode);
-        return codeExtractedFromGoogleUrlResponse;
     }
 
 }

@@ -21,8 +21,8 @@ public class LoginService {
     @Inject
     UserService userService;
 
-    public Map<String, Object> loginGoogleAccess(String loginAuthenticateCode){
-        String accessToken = authService.exchangeCodeForToken(loginAuthenticateCode).getAccessToken();
+    public Map<String, Object> loginGoogleAccess(String loginAuthenticateCode) throws Exception {
+        String accessToken = authService.exchangeCodeForToken(loginAuthenticateCode);
 
         UserDTO userDTO = createOrUpdateUserAndSetToken(accessToken);
 
@@ -34,7 +34,7 @@ public class LoginService {
 
     @Transactional
     public UserDTO createOrUpdateUserAndSetToken(String accessToken){
-        UserDTO externalGoogleUserDTO = authService.getGoogleUserParams(accessToken).getUserDTO();
+        UserDTO externalGoogleUserDTO = authService.getGoogleUserParams(accessToken);
         UserDTO userDataBaseDTO = userService.getUserByGoogleId(externalGoogleUserDTO.getGoogleUserId());
 
         if (Objects.isNull(userDataBaseDTO)) {

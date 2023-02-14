@@ -24,6 +24,8 @@ public enum GoogleAuthServiceErrorMessage implements IGoogleAuthServiceErrorMess
 
     private static final String ERROR_GOOGLE_AUTH_006 = "ERROR_GOOGLE_AUTH_006";
 
+    private static final String ERROR_GOOGLE_AUTH_007 = "ERROR_GOOGLE_AUTH_007";
+
     @Override
     public String redirectToGoogleAuthError(RuntimeException ex) {
         LOGGER.debug("Error [{}] ", ERROR_GOOGLE_AUTH_001, ex);
@@ -56,7 +58,7 @@ public enum GoogleAuthServiceErrorMessage implements IGoogleAuthServiceErrorMess
     }
 
     @Override
-    public String exchangeCodeForTokenError(RuntimeException ex, String loginAuthenticateCode) {
+    public String exchangeCodeForTokenError(Exception ex, String loginAuthenticateCode) {
         LOGGER.debug("Error when exchange code for token, method parameter: loginAuthenticateCode: [{}], " +
                 "the external error is: [{}] " +
                 "the internal error occurred was [{}]", loginAuthenticateCode, ERROR_GOOGLE_AUTH_005, ex);
@@ -69,6 +71,14 @@ public enum GoogleAuthServiceErrorMessage implements IGoogleAuthServiceErrorMess
                 "the external error is: [{}] " +
                 "the internal error occurred was [{}]", accessToken, ERROR_GOOGLE_AUTH_006, ex);
         return ERROR_GOOGLE_AUTH_006;
+    }
+
+    @Override
+    public String getGoogleAuthUrl(Exception ex) {
+        LOGGER.debug("Error when get Google auth url, " +
+                "the external error is: [{}] " +
+                "the internal error occurred was [{}]", ERROR_GOOGLE_AUTH_007, ex);
+        return ERROR_GOOGLE_AUTH_007;
     }
 
 
