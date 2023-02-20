@@ -30,6 +30,9 @@ public class GoogleAuthConfig {
     @ConfigProperty(name = "google.auth2.userInfoUrl")
     String userInfoUrl;
 
+    @ConfigProperty(name = "google.auth2.exchangeCodeForToken.jsonParameter")
+    String jsonParameter;
+
     @ConfigProperty(name = "google.auth2.exchangeCodeForToken.headerName")
     String headerName;
 
@@ -39,9 +42,17 @@ public class GoogleAuthConfig {
     @ConfigProperty(name = "google.auth2.exchangeCodeForToken.requestUrl")
     String requestUrl;
 
-    @ConfigProperty(name = "google.auth2.exchangeCodeForToken.jsonParameter")
-    String jsonParameter;
+    @ConfigProperty(name = "quarkus.datasource.username")
+    String userNameDataBase;
 
+    @ConfigProperty(name = "quarkus.datasource.password")
+    String passwordDataBase;
+
+    @ConfigProperty(name = "quarkus.datasource.jdbc.url")
+    String jdbcUrl;
+
+    @ConfigProperty(name = "quarkus.flyway.schemas")
+    String flywaySchema;
 
 }
 

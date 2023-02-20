@@ -4,17 +4,13 @@ BEGIN
 END
 
 -- apagando as tabelas caso ja existam
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'appointmentNotes.horasApontadas') AND type in (N'U'))
-DROP TABLE appointmentNotes.horasApontadas;
+-- DROP TABLE appointmentNotes.horasApontadas;
 
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'appointmentNotes.projetoAtuacao') AND type in (N'U'))
-DROP TABLE appointmentNotes.projetoAtuacao;
+-- DROP TABLE appointmentNotes.projetoAtuacao;
 
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'appointmentNotes.usuario') AND type in (N'U'))
-DROP TABLE appointmentNotes.usuario;
+-- DROP TABLE appointmentNotes.usuario;
 
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'appointmentNotes.perfilUsuario') AND type in (N'U'))
-DROP TABLE appointmentNotes.perfilUsuario;
+-- DROP TABLE appointmentNotes.perfilUsuario;
 
 CREATE TABLE appointmentNotes.usuario (
 	id BIGINT PRIMARY KEY,
@@ -60,3 +56,5 @@ CREATE TABLE appointmentNotes.horasApontadas (
 	usuarioId BIGINT,
 	FOREIGN KEY (usuarioId) REFERENCES appointmentNotes.usuario(id)
 );
+
+

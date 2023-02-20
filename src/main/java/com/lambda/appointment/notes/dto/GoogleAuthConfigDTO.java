@@ -42,6 +42,17 @@ public class GoogleAuthConfigDTO {
     @JsonProperty("jsonParameter")
     String jsonParameter;
 
+    @JsonProperty("userNameDataBase")
+    String userNameDataBase;
+
+    @JsonProperty("passwordDataBase")
+    String passwordDataBase;
+
+    @JsonProperty("jdbcUrl")
+    String jdbcUrl;
+
+    @JsonProperty("flywaySchema")
+    String flywaySchema;
 
 }
 
