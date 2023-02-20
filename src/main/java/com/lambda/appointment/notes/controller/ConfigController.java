@@ -1,13 +1,15 @@
 package com.lambda.appointment.notes.controller;
 
+import com.lambda.appointment.notes.config.ConfigEnvironment;
 import com.lambda.appointment.notes.config.GoogleAuthConfig;
+import com.lambda.appointment.notes.dto.ConfigEnvironmentDTO;
 import com.lambda.appointment.notes.dto.GoogleAuthConfigDTO;
+import com.lambda.appointment.notes.mapper.ConfigEnviromentMapper;
 import com.lambda.appointment.notes.mapper.GoogleAuthConfigMapper;
 
 import javax.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -19,6 +21,9 @@ public class ConfigController {
 
     @Inject
     GoogleAuthConfig googleAuthConfig;
+
+    @Inject
+    ConfigEnvironment configEnvironments;
 
     @Inject
     @ConfigProperty(name = "SQL_SERVER_DB_URL")
@@ -33,10 +38,9 @@ public class ConfigController {
 
     @GET
     @Path("environments")
-    public StringBuilder getLocalEnvironments() {
-        StringBuilder str = new StringBuilder();
-        str.append("Valor de SQL_SERVER_DATA_BASE_URL: " + System.getenv("SQL_SERVER_DB_URL"));
-        return str;
+    public ConfigEnvironmentDTO getLocalEnvironments() {
+        ConfigEnvironmentDTO configEnvironmentDTO = ConfigEnviromentMapper.toDTO(configEnvironments);
+        return configEnvironmentDTO;
     }
 
 }
