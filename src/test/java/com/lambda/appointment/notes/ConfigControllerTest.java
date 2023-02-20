@@ -39,7 +39,7 @@ public class ConfigControllerTest {
         assertThat(MESSAGE_NOT_CORRECT + "HeaderName", googleAuthConfigDTO.getHeaderName(), equalTo(HEADER_NAME));
         assertThat(MESSAGE_NOT_CORRECT + "TokenInfoUrl", googleAuthConfigDTO.getTokenInfoUrl(), equalTo(TOKEN_INFO_URL));
         assertThat(MESSAGE_NOT_CORRECT + "RequestUrl", googleAuthConfigDTO.getRequestUrl(), equalTo(REQUEST_URL));
-        assertThat(MESSAGE_NOT_CORRECT + "redirectUri", redirectUri, equalTo("https://eab5-189-112-50-138.sa.ngrok.io"));
+        assertThat(MESSAGE_NOT_CORRECT + "redirectUri", redirectUri, equalTo("https://6dee-191-221-193-141.sa.ngrok.io"));
     }
 
 }

@@ -1,14 +1,13 @@
 package com.lambda.appointment.notes.mapper;
 
 import com.lambda.appointment.notes.config.ConfigEnvironment;
-import com.lambda.appointment.notes.config.GoogleAuthConfig;
 import com.lambda.appointment.notes.dto.ConfigEnvironmentDTO;
 import org.modelmapper.ModelMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ConfigEnviromentMapper {
+public class ConfigEnvironmentMapper {
 
     private static ModelMapper modelMapper = new ModelMapper();
 

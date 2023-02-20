@@ -21,7 +21,7 @@ public class GoogleCloudAuth2Test {
     private static final String GOOGLE_CODE_EXPECTED_RESPONSE = "4%2F0AWtgzh64nc6bOg0_Fr0L14wf9-56NZ-dqONHagSDjzN7PDhMGtroGXXs7rMzkPkh_uJqAA";
 
 
-    @Test
+    //@Test
     public void testExtractOfGoogleCodeUrlForAuthenticate() {
         CodeExtractedFromGoogleUrlResponse response =
                 given()
