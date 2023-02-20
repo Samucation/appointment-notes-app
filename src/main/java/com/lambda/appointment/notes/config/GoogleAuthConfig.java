@@ -30,8 +30,8 @@ public class GoogleAuthConfig {
     @ConfigProperty(name = "google.auth2.userInfoUrl")
     String userInfoUrl;
 
-    @ConfigProperty(name = "google.auth2.exchangeCodeForToken.jsonParameter")
-    String jsonParameter;
+    @ConfigProperty(name = "google.auth2.exchangeCodeForToken.jsonAccessTokenParameter")
+    String jsonAccessTokenParameter;
 
     @ConfigProperty(name = "google.auth2.exchangeCodeForToken.headerName")
     String headerName;

@@ -39,8 +39,8 @@ public class GoogleAuthConfigDTO {
     @JsonProperty("requestUrl")
     String requestUrl;
 
-    @JsonProperty("jsonParameter")
-    String jsonParameter;
+    @JsonProperty("jsonAccessTokenParameter")
+    String jsonAccessTokenParameter;
 
     @JsonProperty("userNameDataBase")
     String userNameDataBase;

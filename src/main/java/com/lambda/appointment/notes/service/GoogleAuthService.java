@@ -49,7 +49,7 @@ public class GoogleAuthService {
             String headerName = googleAuthConfig.getHeaderName();
             String headerValue = googleAuthConfig.getHeaderValue();
             String requestUrl = googleAuthConfig.getRequestUrl();
-            String jsonParameter = googleAuthConfig.getJsonParameter();
+            String jsonAccessTokenParameter = googleAuthConfig.getJsonAccessTokenParameter();
             //String grantType = requestRefreshToken ? "refresh_token" : "authorization_code"; // TODO não está aceitando a tag refresh_token verificar se precisa mesmo para obter o refresh token infinito em teoria só colocar "&access_type=offline" deve resolver
             String grantType = "authorization_code"; // TODO Verificar se precisa mesmo ter o atributo comentado acima que altera entre "refresh_token" que não funciona, e "authorization_code" que funciona para os dois.
             String requestBody;
@@ -68,10 +68,10 @@ public class GoogleAuthService {
             JsonObject responseJson = Json.createReader(new StringReader(responseBody)).readObject();
 
             if (requestRefreshToken) {
-                String accessToken = responseJson.getString(jsonParameter); // TODO Vaidar se existe esse campo no body String accessToken = responseJson.getString("refresh_token"); pois não funciona só funciona com o access_token como parametro.
+                String accessToken = responseJson.getString(jsonAccessTokenParameter); // TODO Vaidar se existe esse campo no body String accessToken = responseJson.getString("refresh_token"); pois não funciona só funciona com o access_token como parametro.
                 return accessToken;
             } else {
-                String accessToken = responseJson.getString(jsonParameter);
+                String accessToken = responseJson.getString(jsonAccessTokenParameter);
                 return accessToken;
             }
         } catch (RuntimeException ex) {

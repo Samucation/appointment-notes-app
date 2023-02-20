@@ -12,7 +12,7 @@ google:
       headerName: Content-Type
       headerValue: application/x-www-form-urlencoded
       requestUrl: https://oauth2.googleapis.com/token
-      jsonParameter: access_token
+      jsonAccessTokenParameter: access_token
 
 quarkus:
   datasource:
@@ -31,4 +31,4 @@ quarkus:
     baseline-on-migrate: true
     baseline-version: 1.0.0
     schemas: ${SCHEMA_DB_NAME}
-    clean-at-start: false
+    clean-at-start: true
