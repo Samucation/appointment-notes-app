@@ -10,8 +10,10 @@ public interface IGoogleAuthServiceErrorMessage {
 
    String renewTokenError(RuntimeException ex, String accessToken);
 
-   String exchangeCodeForTokenError(RuntimeException ex, String loginAuthenticateCode);
+   String exchangeCodeForTokenError(Exception ex, String loginAuthenticateCode);
 
    String getGoogleUserIdError(RuntimeException ex, String accessToken);
+
+   String getGoogleAuthUrl(Exception e) ;
 
 }

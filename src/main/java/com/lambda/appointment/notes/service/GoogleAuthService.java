@@ -1,10 +1,11 @@
 package com.lambda.appointment.notes.service;
 
-import com.lambda.appointment.notes.dto.*;
-import com.lambda.appointment.notes.indicators.GoogleAuthServiceErrorMessage;
+import com.lambda.appointment.notes.config.GoogleAuthConfig;
+import com.lambda.appointment.notes.dto.UserDTO;
 import com.lambda.appointment.notes.util.GoogleAuthServiceStringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
@@ -16,54 +17,71 @@ import javax.ws.rs.core.Response;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLDecoder;
 
 @ApplicationScoped
 public class GoogleAuthService {
 
-    private final String clientId = "119876353782-5lu09i7mfu1omm23r6s9so1i9m5hiejg.apps.googleusercontent.com"; // client ID of Google
-    private final String clientSecret = "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"; // client secret of Google
-    private final String redirectUri = "https://9a13-191-221-193-141.sa.ngrok.io/"; // Application public URL
+    @Inject
+    GoogleAuthConfig googleAuthConfig;
+
+    @Inject
+    GoogleAuthServiceStringUtils googleAuthServiceStringUtils;
 
 
-    public String getGoogleAuthUrl() {
-        String url = "https://accounts.google.com/o/oauth2/v2/auth" +
-                "?response_type=code" +
-                "&client_id=" + clientId +
-                "&redirect_uri=" + redirectUri +
-                "&scope=openid%20email%20profile" +
-                "&prompt=select_account";
-        return url;
+    public String getGoogleAuthUrl() throws Exception {
+        try {
+            String clientId = googleAuthConfig.getClientId();
+            String redirectUri = googleAuthConfig.getRedirectUri();
+            String url = googleAuthServiceStringUtils.createGoogleApplicationUrl(clientId, redirectUri);
+            return url;
+        } catch (Exception e) {
+            throw new Exception("Error while get google auth url: that error is: ", e);
+        }
     }
 
-    public ExchangeGoogleCodeForTokenResponse exchangeCodeForToken(String loginAuthenticateCode) {
-        try{
-            String body = GoogleAuthServiceStringUtils.createTokenUrlRequest(loginAuthenticateCode, clientId, clientSecret, redirectUri);
-            String headerName = "Content-Type";
-            String headerValue = "application/x-www-form-urlencoded";
-            String requestUrl = "https://oauth2.googleapis.com/token";
-            String jsonParameter = "access_token";
+    public String exchangeCodeForToken(String loginAuthenticateCode, boolean requestRefreshToken) throws Exception {
+        try {
+            String clientId = googleAuthConfig.getClientId();
+            String clientSecret = googleAuthConfig.getClientSecret();
+            String redirectUri = googleAuthConfig.getRedirectUri();
+
+            String bodyBase = googleAuthServiceStringUtils.createTokenUrlRequest(loginAuthenticateCode, clientId, clientSecret, redirectUri);
+            String headerName = googleAuthConfig.getHeaderName();
+            String headerValue = googleAuthConfig.getHeaderValue();
+            String requestUrl = googleAuthConfig.getRequestUrl();
+            String jsonParameter = googleAuthConfig.getJsonParameter();
+            //String grantType = requestRefreshToken ? "refresh_token" : "authorization_code"; // TODO não está aceitando a tag refresh_token verificar se precisa mesmo para obter o refresh token infinito em teoria só colocar "&access_type=offline" deve resolver
+            String grantType = "authorization_code"; // TODO Verificar se precisa mesmo ter o atributo comentado acima que altera entre "refresh_token" que não funciona, e "authorization_code" que funciona para os dois.
+            String requestBody;
+
+            if (requestRefreshToken) {
+                requestBody = bodyBase + grantType + "&access_type=offline&prompt=consent"; //"&access_type=offline";
+            } else {
+                requestBody = bodyBase + grantType;
+            }
 
             Client client = ClientBuilder.newClient();
             WebTarget target = client.target(requestUrl);
-            Response response = target.request().header(headerName, headerValue)
-                    .post(Entity.entity(body, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+            Response response = target.request().header(headerName, headerValue).post(Entity.entity(requestBody, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
             String responseBody = response.readEntity(String.class);
             JsonObject responseJson = Json.createReader(new StringReader(responseBody)).readObject();
 
-            String accessToken = responseJson.getString(jsonParameter);
-
-            return new ExchangeGoogleCodeForTokenResponse(accessToken);
+            if (requestRefreshToken) {
+                String accessToken = responseJson.getString(jsonParameter); // TODO Vaidar se existe esse campo no body String accessToken = responseJson.getString("refresh_token"); pois não funciona só funciona com o access_token como parametro.
+                return accessToken;
+            } else {
+                String accessToken = responseJson.getString(jsonParameter);
+                return accessToken;
+            }
         } catch (RuntimeException ex) {
-            return new ExchangeGoogleCodeForTokenResponse(null,
-                    GoogleAuthServiceErrorMessage.EXTERNAL.exchangeCodeForTokenError(ex, loginAuthenticateCode));
+            throw new Exception("Error while exchange code for token: that error is: ", ex);
         }
     }
 
-    public GoogleUserIdResponse getGoogleUserId(String accessToken) {
+    public UserDTO getGoogleUserParams(String accessToken) {
         try{
-            String urlGoogleUserInfo = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=" + accessToken;
+            String urlGoogleUserInfo = googleAuthConfig.getUserInfoUrl() + accessToken;
 
             Client client = ClientBuilder.newClient();
             WebTarget target = client.target(urlGoogleUserInfo);
@@ -76,73 +94,38 @@ public class GoogleAuthService {
             userDTO.setGoogleUserId(responseJson.getString("id"));
             userDTO.setName(responseJson.getString("name"));
             userDTO.setEmail(responseJson.getString("email"));
-            return new GoogleUserIdResponse(userDTO);
+            return userDTO;
         } catch (RuntimeException ex) {
-            return new GoogleUserIdResponse(GoogleAuthServiceErrorMessage.EXTERNAL.getGoogleUserIdError(ex,accessToken));
+            throw new RuntimeException("Error while get google params in auth2 google cloud, that error is: ", ex);
         }
     }
 
-    public IsGoogleTokenValidResponse isTokenValid(String accessToken) {
-        IsGoogleTokenValidResponse isGoogleTokenValidResponse = new IsGoogleTokenValidResponse();
+    public Boolean isTokenValid(String accessToken) throws Exception {
         try {
-            String urlGoogleTokenInfo = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken;
+            String urlGoogleTokenInfo = googleAuthConfig.getTokenInfoUrl() + accessToken;
 
             URL url = new URL(urlGoogleTokenInfo);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             int responseCode = conn.getResponseCode();
-            if (responseCode == 200) {
-                isGoogleTokenValidResponse.setIsTokenValid(Boolean.TRUE);
-            }
             conn.disconnect();
-        } catch (Exception e) {
-           isGoogleTokenValidResponse.setIsTokenValid(Boolean.FALSE);
-           isGoogleTokenValidResponse.setExternalError(GoogleAuthServiceErrorMessage.EXTERNAL.isTokenValidError(e, accessToken));
-        }
-        return isGoogleTokenValidResponse;
-    }
 
-    public RenewGoogleTokenResponse renewToken(String accessToken) {
-        try {
-            if (isTokenValid(accessToken).getIsTokenValid()) {
-                return new RenewGoogleTokenResponse(Boolean.TRUE, accessToken);
+            if (responseCode == 200) {
+                return Boolean.TRUE;
+            } else {
+                return Boolean.FALSE;
             }
-            String redirectUrl = getGoogleAuthUrl();
-            CodeExtractedFromGoogleUrlResponse codeExtractedFromGoogleUrlResponse = extractCodeFromRedirectUrl(redirectUrl);
-            String codeExtracted = codeExtractedFromGoogleUrlResponse.getCodeExtractedFromUrl();
-
-            accessToken = exchangeCodeForToken(codeExtracted).getAccessToken();
-            return new RenewGoogleTokenResponse(Boolean.TRUE, accessToken);
-        } catch (RuntimeException ex) {
-            return new RenewGoogleTokenResponse(Boolean.FALSE,
-                    GoogleAuthServiceErrorMessage.EXTERNAL.renewTokenError(ex, accessToken), null);
+        } catch (Exception e) {
+            throw new Exception("Error while validate if token is valid, that error is: ", e);
         }
     }
 
-    public CodeExtractedFromGoogleUrlResponse extractCodeFromRedirectUrl(String urlWithCode) {
-        CodeExtractedFromGoogleUrlResponse codeExtractedFromGoogleUrlResponse = new CodeExtractedFromGoogleUrlResponse();
-        String extractedCode = null;
-        String codeUrlTag = "code=";
-        String encodeType = "UTF-8";
-        String finalReferenceParam = "&";
-
+    public String extractCodeFromRedirectUrl(String urlWithCode) throws Exception {
         try {
-            String decodedUrl = URLDecoder.decode(urlWithCode, encodeType);
-            int codeIndex = decodedUrl.indexOf(codeUrlTag);
-            if (codeIndex == -1) {
-                extractedCode = "";
-            }
-            int ampersandIndex = decodedUrl.indexOf(finalReferenceParam, codeIndex);
-            if (ampersandIndex == -1) {
-                extractedCode = decodedUrl.substring(codeIndex + codeUrlTag.length());
-            }
-            extractedCode = decodedUrl.substring(codeIndex + codeUrlTag.length(), ampersandIndex);
+           return googleAuthServiceStringUtils.extractCodeIntoUrlGoogleAuth2Response(urlWithCode);
         } catch (Exception e) {
-            codeExtractedFromGoogleUrlResponse.setExternalError(
-                    GoogleAuthServiceErrorMessage.EXTERNAL.extractCodeFromRedirectUrlError(e, urlWithCode));
+            throw new Exception("Error while extract code from redirect url, that error is: ", e);
         }
-        codeExtractedFromGoogleUrlResponse.setCodeExtractedFromUrl(extractedCode);
-        return codeExtractedFromGoogleUrlResponse;
     }
 
 }

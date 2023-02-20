@@ -1,4 +1,4 @@
-package com.lambda.appointment.notes.dto;
+package com.lambda.appointment.notes.dto.response;
 
 
 import lombok.Data;

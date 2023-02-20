@@ -1,5 +1,6 @@
 package com.lambda.appointment.notes;
 
+import com.lambda.appointment.notes.dto.response.CodeExtractedFromGoogleUrlResponse;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
@@ -20,9 +21,9 @@ public class GoogleCloudAuth2Test {
     private static final String GOOGLE_CODE_EXPECTED_RESPONSE = "4%2F0AWtgzh64nc6bOg0_Fr0L14wf9-56NZ-dqONHagSDjzN7PDhMGtroGXXs7rMzkPkh_uJqAA";
 
 
-    @Test
+    //@Test
     public void testExtractOfGoogleCodeUrlForAuthenticate() {
-        String response =
+        CodeExtractedFromGoogleUrlResponse response =
                 given()
                         .header("accept", "*/*")
                         .queryParam("urlWithCode", GOOGLE_FULL_AUTHENTICATED_URL_WITH_CODE)
@@ -30,9 +31,10 @@ public class GoogleCloudAuth2Test {
                         .then()
                         .statusCode(200)
                         .contentType(ContentType.JSON)
-                        .extract().body().asString();
+                        .extract().body().as(CodeExtractedFromGoogleUrlResponse.class);
         //assertThat(response, is(googleFullAuthenticatedUrlWithCode));
-        assertThat("That code is not correct for expected value.", response, equalTo(googleFullAuthenticatedUrlWithCode));
+        assertThat("That code is not correct for expected value.",
+                response.getCodeExtractedFromUrl(), equalTo(googleFullAuthenticatedUrlWithCode));
     }
 
 

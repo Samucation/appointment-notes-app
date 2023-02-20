@@ -1,5 +1,6 @@
-package com.lambda.appointment.notes.dto;
+package com.lambda.appointment.notes.dto.response;
 
+import com.lambda.appointment.notes.dto.UserDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
