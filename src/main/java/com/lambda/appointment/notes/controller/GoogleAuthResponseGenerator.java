@@ -30,9 +30,9 @@ public class GoogleAuthResponseGenerator {
         }
     }
 
-    public ExchangeGoogleCodeForTokenResponse exchangeCodeForToken(String loginAuthenticateCode) {
+    public ExchangeGoogleCodeForTokenResponse exchangeCodeForToken(String loginAuthenticateCode, Boolean requestRefreshToken) {
         try{
-           String accessToken = googleAuthService.exchangeCodeForToken(loginAuthenticateCode);
+           String accessToken = googleAuthService.exchangeCodeForToken(loginAuthenticateCode, requestRefreshToken);
            return new ExchangeGoogleCodeForTokenResponse(accessToken);
         } catch (Exception ex) {
             return new ExchangeGoogleCodeForTokenResponse(null,
@@ -73,10 +73,10 @@ public class GoogleAuthResponseGenerator {
         return codeExtractedFromGoogleUrlResponse;
     }
 
-    public Map<String, Object> loginGoogleAccess(String loginAuthenticateCode) {
+    public Map<String, Object> loginGoogleAccess(String loginAuthenticateCode, Boolean requestRefreshToken) {
         Map<String, Object> loginGoogleAccessResponse = null;
         try {
-            loginGoogleAccessResponse = loginService.loginGoogleAccess(loginAuthenticateCode);
+            loginGoogleAccessResponse = loginService.loginGoogleAccess(loginAuthenticateCode, requestRefreshToken);
         } catch (Exception e) {
             e.printStackTrace();
         }

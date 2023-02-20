@@ -21,8 +21,8 @@ public class LoginService {
     @Inject
     UserService userService;
 
-    public Map<String, Object> loginGoogleAccess(String loginAuthenticateCode) throws Exception {
-        String accessToken = authService.exchangeCodeForToken(loginAuthenticateCode);
+    public Map<String, Object> loginGoogleAccess(String loginAuthenticateCode, Boolean requestRefreshToken) throws Exception {
+        String accessToken = authService.exchangeCodeForToken(loginAuthenticateCode, requestRefreshToken);
 
         UserDTO userDTO = createOrUpdateUserAndSetToken(accessToken);
 

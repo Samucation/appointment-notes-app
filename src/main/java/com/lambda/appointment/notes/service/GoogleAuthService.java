@@ -39,28 +39,41 @@ public class GoogleAuthService {
         }
     }
 
-    public String exchangeCodeForToken(String loginAuthenticateCode) throws Exception {
-        try{
+    public String exchangeCodeForToken(String loginAuthenticateCode, boolean requestRefreshToken) throws Exception {
+        try {
             String clientId = googleAuthConfig.getClientId();
             String clientSecret = googleAuthConfig.getClientSecret();
             String redirectUri = googleAuthConfig.getRedirectUri();
 
-            String body = googleAuthServiceStringUtils.createTokenUrlRequest(loginAuthenticateCode, clientId, clientSecret, redirectUri);
+            String bodyBase = googleAuthServiceStringUtils.createTokenUrlRequest(loginAuthenticateCode, clientId, clientSecret, redirectUri);
             String headerName = googleAuthConfig.getHeaderName();
             String headerValue = googleAuthConfig.getHeaderValue();
             String requestUrl = googleAuthConfig.getRequestUrl();
             String jsonParameter = googleAuthConfig.getJsonParameter();
+            //String grantType = requestRefreshToken ? "refresh_token" : "authorization_code"; // TODO não está aceitando a tag refresh_token verificar se precisa mesmo para obter o refresh token infinito em teoria só colocar "&access_type=offline" deve resolver
+            String grantType = "authorization_code"; // TODO Verificar se precisa mesmo ter o atributo comentado acima que altera entre "refresh_token" que não funciona, e "authorization_code" que funciona para os dois.
+            String requestBody;
+
+            if (requestRefreshToken) {
+                requestBody = bodyBase + grantType + "&access_type=offline&prompt=consent"; //"&access_type=offline";
+            } else {
+                requestBody = bodyBase + grantType;
+            }
 
             Client client = ClientBuilder.newClient();
             WebTarget target = client.target(requestUrl);
-            Response response = target.request().header(headerName, headerValue).post(Entity.entity(body, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+            Response response = target.request().header(headerName, headerValue).post(Entity.entity(requestBody, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
             String responseBody = response.readEntity(String.class);
             JsonObject responseJson = Json.createReader(new StringReader(responseBody)).readObject();
 
-            String accessToken = responseJson.getString(jsonParameter);
-
-            return accessToken;
+            if (requestRefreshToken) {
+                String accessToken = responseJson.getString(jsonParameter); // TODO Vaidar se existe esse campo no body String accessToken = responseJson.getString("refresh_token"); pois não funciona só funciona com o access_token como parametro.
+                return accessToken;
+            } else {
+                String accessToken = responseJson.getString(jsonParameter);
+                return accessToken;
+            }
         } catch (RuntimeException ex) {
             throw new Exception("Error while exchange code for token: that error is: ", ex);
         }

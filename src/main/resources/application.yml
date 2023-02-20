@@ -1,11 +1,11 @@
 
 google:
   auth2:
-    redirectUri: https://4c56-189-112-50-138.sa.ngrok.io
+    redirectUri: https://afe1-191-221-193-141.sa.ngrok.io
     clientSecret: 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
     clientId: 119876353782-5lu09i7mfu1omm23r6s9so1i9m5hiejg.apps.googleusercontent.com
     googleAuthApplicationUrl: https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={clientId}&redirect_uri={redirectUri}&scope=openid%20email%20profile&prompt=select_account
-    googleTokenUrlRequest: code={loginAuthenticateCode}&client_id={clientId}&client_secret={clientSecret}&redirect_uri={redirectUri}&grant_type=authorization_code
+    googleTokenUrlRequest: code={loginAuthenticateCode}&client_id={clientId}&client_secret={clientSecret}&redirect_uri={redirectUri}&grant_type=
     tokenInfoUrl: https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=
     userInfoUrl: https://www.googleapis.com/oauth2/v1/userinfo?access_token=
     exchangeCodeForToken:

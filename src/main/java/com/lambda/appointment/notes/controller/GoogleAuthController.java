@@ -33,8 +33,8 @@ public class GoogleAuthController {
 
     @POST
     @Path("generate-token")
-    public Map<String, Object> googleCallback(@QueryParam("code") String loginAuthenticateCode) {
-        return googleAuthResponseGenerator.loginGoogleAccess(loginAuthenticateCode);
+    public Map<String, Object> googleCallback(@QueryParam("code") String loginAuthenticateCode, @QueryParam("refreshTokenEnabled") Boolean requestRefreshToken) {
+        return googleAuthResponseGenerator.loginGoogleAccess(loginAuthenticateCode, requestRefreshToken);
     }
 
     @POST
